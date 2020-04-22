@@ -45,7 +45,14 @@ module Supply
     # Initializes the service and its auth_client using the specified information
     # @param service_account_json: The raw service account Json data
     def initialize(service_account_json: nil, params: nil)
-      auth_client = Google::Auth::ServiceAccountCredentials.make_creds(json_key_io: service_account_json, scope: self.class::SCOPE)
+      service_account_data = JSON.parse(service_account_json.read)
+      service_account_json.rewind
+
+      if service_account_data.key?("refresh_token")
+        auth_client = Google::Auth::UserRefreshCredentials.make_creds(json_key_io: service_account_json, scope: self.class::SCOPE)
+      else
+        auth_client = Google::Auth::ServiceAccountCredentials.make_creds(json_key_io: service_account_json, scope: self.class::SCOPE)
+      end
 
       UI.verbose("Fetching a new access token from Google...")
 
